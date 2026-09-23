@@ -86,15 +86,19 @@ dotnet publish src/MCP_MSSQL_Defense -c Release -o publish
 claude mcp add mssql-defense -- "<專案路徑>\publish\MCP_MSSQL_Defense.exe"
 ```
 
-啟動快、行為固定。修改程式後需重新 publish；Server 執行中時 Windows 會鎖住執行檔，請先結束使用中的 Claude Code 再 publish。
+啟動快、行為固定，且 Server 執行的是 `publish/` 內的檔案，不影響 `dotnet build`、`dotnet test`。
+修改程式後需重新 publish；Server 執行中時 Windows 會鎖住執行檔，請先結束使用中的 Claude Code 再 publish。
 
-### 方式二：開發期間直接從原始碼執行
+### 方式二：直接從原始碼執行（免 publish，適合快速試用）
 
 ```powershell
 claude mcp add mssql-defense -- dotnet run --project "<專案路徑>\src\MCP_MSSQL_Defense"
 ```
 
-每次啟動都會先建置，速度較慢，但修改程式後不需重新 publish。
+啟動時會自動建置，不需要 publish，但有兩個限制，因此不建議在開發本專案時使用：
+
+- **編譯訊息會混入 MCP 通訊**：`dotnet run` 需要重新編譯時，會把編譯警告與錯誤輸出到 stdout，干擾 MCP 協定。啟動前請先確認 `dotnet build` 為 0 警告、0 錯誤。
+- **執行期間會鎖住建置輸出**：Server 執行中時，`src/MCP_MSSQL_Defense/bin` 內的檔案被鎖住，修改程式後執行 `dotnet build`、`dotnet test` 會失敗（MSB3027）。
 
 ### 設定範圍（scope）
 
@@ -102,7 +106,7 @@ claude mcp add mssql-defense -- dotnet run --project "<專案路徑>\src\MCP_MSS
 
 | scope | 說明 |
 |---|---|
-| `local`（預設） | 只在目前專案中可用，設定僅限自己 |
+| `local`（預設） | 只在執行 `claude mcp add` 時所在的專案目錄中可用，設定僅限自己 |
 | `project` | 寫入專案根目錄的 `.mcp.json`，可提交版控與團隊共用 |
 | `user` | 自己的所有專案都可用 |
 
